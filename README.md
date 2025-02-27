@@ -1,6 +1,6 @@
 # Inventory Management System
 
-A modern, full-stack inventory management system built with the MERN stack (MongoDB, Express.js, React, Node.js). This system helps businesses manage their inventory, track stock levels, process orders, and maintain supplier relationships.
+A modern, full-stack inventory management system built with Node.js, Express, MySQL, and vanilla JavaScript. This system helps businesses manage their inventory, track stock levels, process orders, and maintain supplier relationships.
 
 ## Features
 
@@ -16,16 +16,16 @@ A modern, full-stack inventory management system built with the MERN stack (Mong
 
 ## Tech Stack
 
-- **Frontend**: React.js, Material-UI, Redux Toolkit
+- **Frontend**: HTML, CSS, and JavaScript (Vanilla)
 - **Backend**: Node.js, Express.js
-- **Database**: MongoDB
+- **Database**: MySQL
 - **Authentication**: JWT (JSON Web Tokens)
 - **API Documentation**: Swagger/OpenAPI
 
 ## Prerequisites
 
 - Node.js (v14 or higher)
-- MongoDB
+- MySQL
 - npm or yarn
 
 ## Installation
@@ -43,12 +43,21 @@ A modern, full-stack inventory management system built with the MERN stack (Mong
 
 3. Create a .env file in the root directory and add your environment variables:
    ```
-   MONGODB_URI=your_mongodb_connection_string
-   JWT_SECRET=your_jwt_secret
+   DB_NAME=inventory_system
+   DB_USER=your_mysql_username
+   DB_PASSWORD=your_mysql_password
+   DB_HOST=localhost
    PORT=5000
+   JWT_SECRET=your_jwt_secret
    ```
 
-4. Start the development server:
+4. Set up the database:
+   ```bash
+   # Log into MySQL and run the schema file
+   mysql -u your_username -p < server/config/schema.sql
+   ```
+
+5. Start the development server:
    ```bash
    npm run dev
    ```
@@ -59,15 +68,15 @@ The application will start with the backend running on http://localhost:5000 and
 
 ```
 inventory-management-system/
-├── client/                 # React frontend
+├── client/                 # Frontend
 │   ├── public/
-│   └── src/
-│       ├── components/
-│       ├── pages/
-│       ├── redux/
-│       └── services/
+│   │   ├── index.html
+│   │   ├── styles.css
+│   │   └── app.js
 ├── server/                 # Node.js backend
 │   ├── config/
+│   │   ├── database.js
+│   │   └── schema.sql
 │   ├── controllers/
 │   ├── middleware/
 │   ├── models/
