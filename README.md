@@ -1,103 +1,66 @@
 # Inventory Management System
 
-A modern, full-stack inventory management system built with Node.js, Express, MySQL, and vanilla JavaScript. This system helps businesses manage their inventory, track stock levels, process orders, and maintain supplier relationships.
+Hey there! This is a simple inventory management system I made to keep track of stuff. It's not perfect but it gets the job done 😅
+
+## What it does
+
+- Keeps track of all your products and their quantities
+- Shows you when stuff is running low
+- Lets you add/edit/delete products
+- Has a nice looking UI (at least I think so)
+- Works on mobile too!
+
+## How to use it
+
+First, you gotta install all the stuff:
+
+```bash
+npm install
+```
+
+Then start the server:
+
+```bash
+npm run server
+```
+
+And in another terminal, start the frontend:
+
+```bash
+npm run client
+```
+
+Thats it! Now you can go to `http://localhost:3000` and start managing your inventory.
 
 ## Features
 
-- 🔐 User Authentication and Role-based Access Control
-- 📦 Product/Item Management
-- 📊 Stock Level Tracking
-- 🛍️ Order Processing
-- 👥 Supplier Management
-- 📈 Reports and Analytics
-- ⚠️ Low Stock Alerts
-- 📝 Audit Trail
-- 🎯 Dashboard with Key Metrics
+- **Product Management**: Add, edit, and delete products with ease
+- **Stock Tracking**: See how much of each product you have
+- **Low Stock Alerts**: Get warned when stuff is running low
+- **Search & Filter**: Find products quickly
+- **Responsive Design**: Works on any device
 
-## Tech Stack
+## Tech Stuff
 
-- **Frontend**: HTML, CSS, and JavaScript (Vanilla)
-- **Backend**: Node.js, Express.js
-- **Database**: MySQL
-- **Authentication**: JWT (JSON Web Tokens)
-- **API Documentation**: Swagger/OpenAPI
+- Frontend: HTML, CSS, JavaScript (the basics)
+- Backend: Node.js with Express
+- Database: MySQL
+- Authentication: JWT (kinda secure I guess)
 
-## Prerequisites
+## Known Issues
 
-- Node.js (v14 or higher)
-- MySQL
-- npm or yarn
-
-## Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/inventory-management-system.git
-   cd inventory-management-system
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm run install-all
-   ```
-
-3. Create a .env file in the root directory and add your environment variables:
-   ```
-   DB_NAME=inventory_system
-   DB_USER=your_mysql_username
-   DB_PASSWORD=your_mysql_password
-   DB_HOST=localhost
-   PORT=5000
-   JWT_SECRET=your_jwt_secret
-   ```
-
-4. Set up the database:
-   ```bash
-   # Log into MySQL and run the schema file
-   mysql -u your_username -p < server/config/schema.sql
-   ```
-
-5. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-The application will start with the backend running on http://localhost:5000 and the frontend on http://localhost:3000.
-
-## Project Structure
-
-```
-inventory-management-system/
-├── client/                 # Frontend
-│   ├── public/
-│   │   ├── index.html
-│   │   ├── styles.css
-│   │   └── app.js
-├── server/                 # Node.js backend
-│   ├── config/
-│   │   ├── database.js
-│   │   └── schema.sql
-│   ├── controllers/
-│   ├── middleware/
-│   ├── models/
-│   └── routes/
-├── .env
-├── .gitignore
-└── package.json
-```
-
-## API Documentation
-
-The API documentation is available at `http://localhost:5000/api-docs` when running the development server.
+- Sometimes the modal doesn't show up (working on it)
+- Mobile view could be better
+- No dark mode yet (coming soon maybe)
 
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Feel free to help out if you want! Just make a pull request and I'll check it out.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+MIT License - do whatever you want with it
+
+## Contact
+
+If you find any bugs or have suggestions, let me know! I'm always looking to improve this thing. 

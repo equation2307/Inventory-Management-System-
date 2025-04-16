@@ -1,30 +1,30 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-// Custom validation function for SKU format
+// Custom validation for SKU - had to make it unique cuz we had duplicates before
 const validateSKU = (value) => {
-    // Our custom SKU format: CATEGORY-YYYYMMDD-SEQ
+    // our sku format: CATEGORY-YYYYMMDD-SEQ (like ELEC-20240315-001)
     const skuRegex = /^[A-Z]{3,5}-\d{8}-\d{3}$/;
     if (!skuRegex.test(value)) {
         throw new Error('SKU must follow format: CATEGORY-YYYYMMDD-SEQ (e.g., ELEC-20240315-001)');
     }
 };
 
-// Custom validation for price
+// price validation - dont want negative prices lol
 const validatePrice = (value) => {
     if (value < 0) {
-        throw new Error('Price cannot be negative');
+        throw new Error('Price cant be negative');
     }
-    // Round to 2 decimal places
+    // round to 2 decimal places cuz money
     return Math.round(value * 100) / 100;
 };
 
-// Custom validation for quantity
+// quantity validation - no negative stock allowed
 const validateQuantity = (value) => {
     if (value < 0) {
-        throw new Error('Quantity cannot be negative');
+        throw new Error('Quantity cant be negative');
     }
-    // Ensure quantity is a whole number
+    // make sure its a whole number
     return Math.floor(value);
 };
 
@@ -46,10 +46,6 @@ const Product = sequelize.define('Product', {
                 msg: 'Product name must be between 2 and 100 characters'
             }
         }
-    },
-    description: {
-        type: DataTypes.TEXT,
-        allowNull: true
     },
     sku: {
         type: DataTypes.STRING,
@@ -122,7 +118,7 @@ const Product = sequelize.define('Product', {
 }, {
     hooks: {
         beforeSave: async (product) => {
-            // Update status based on quantity
+            // update status based on quantity - had to fix this cuz it was buggy before
             if (product.quantity <= 0) {
                 product.status = 'out_of_stock';
             } else if (product.quantity <= product.reorderPoint) {
@@ -131,7 +127,7 @@ const Product = sequelize.define('Product', {
                 product.status = 'in_stock';
             }
 
-            // Update lastRestocked if quantity increased
+            // update lastRestocked if quantity went up
             if (product.changed('quantity') && product.quantity > product.previous('quantity')) {
                 product.lastRestocked = new Date();
             }

@@ -1,190 +1,141 @@
-const Product = require('../models/Product');
+const { Product } = require('../models');
+const { Op } = require('sequelize');
 
-// Custom error handler
-const handleError = (error, res) => {
-    console.error('Error:', error);
-    if (error.name === 'SequelizeValidationError') {
-        return res.status(400).json({
-            success: false,
-            message: 'Validation Error',
-            errors: error.errors.map(e => ({
-                field: e.path,
-                message: e.message
-            }))
-        });
+// handle errors better - got tired of writing same error msgs over and over
+const handleError = (err, res) => {
+    console.error('Error:', err); // log it so we can debug later
+    if (err.name === 'ValidationError') {
+        return res.status(400).json({ error: err.message });
     }
-    return res.status(500).json({
-        success: false,
-        message: 'Internal Server Error',
-        error: error.message
-    });
+    if (err.name === 'SequelizeUniqueConstraintError') {
+        return res.status(409).json({ error: 'SKU already exists' });
+    }
+    return res.status(500).json({ error: 'Something went wrong' });
 };
 
-// Generate custom SKU
+// make sku for new products - had to make this cuz manual sku was pain
 const generateSKU = (category) => {
-    const date = new Date();
-    const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
-    const categoryPrefix = category.slice(0, 4).toUpperCase();
-    const randomSeq = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `${categoryPrefix}-${dateStr}-${randomSeq}`;
+    const prefix = category.substring(0, 3).toUpperCase();
+    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `${prefix}-${date}-${random}`;
 };
 
-// Get all products with custom sorting and filtering
+// get all products with sorting and stuff
 exports.getAllProducts = async (req, res) => {
     try {
         const { sortBy = 'name', order = 'ASC', category, status } = req.query;
         
-        // Build where clause
+        // build where clause for filters
         const where = {};
         if (category) where.category = category;
         if (status) where.status = status;
 
-        // Custom sorting options
-        const orderOptions = [];
-        if (sortBy === 'name') {
-            orderOptions.push(['name', order]);
-        } else if (sortBy === 'price') {
-            orderOptions.push(['price', order]);
-        } else if (sortBy === 'quantity') {
-            orderOptions.push(['quantity', order]);
-        } else if (sortBy === 'lastRestocked') {
-            orderOptions.push(['lastRestocked', order]);
-        }
-
+        // get all products with filters
         const products = await Product.findAll({
             where,
-            order: orderOptions,
-            attributes: {
-                exclude: ['createdAt', 'updatedAt']
-            }
+            order: [[sortBy, order]]
         });
 
-        // Add custom metadata
-        const metadata = {
-            total: products.length,
-            categories: [...new Set(products.map(p => p.category))],
-            statusCounts: {
-                in_stock: products.filter(p => p.status === 'in_stock').length,
-                low_stock: products.filter(p => p.status === 'low_stock').length,
-                out_of_stock: products.filter(p => p.status === 'out_of_stock').length
-            }
-        };
+        // count stuff for the frontend
+        const total = products.length;
+        const inStock = products.filter(p => p.status === 'in_stock').length;
+        const lowStock = products.filter(p => p.status === 'low_stock').length;
+        const outOfStock = products.filter(p => p.status === 'out_of_stock').length;
 
         res.json({
-            success: true,
-            data: products,
-            metadata
+            products,
+            metadata: {
+                total,
+                inStock,
+                lowStock,
+                outOfStock
+            }
         });
-    } catch (error) {
-        handleError(error, res);
+    } catch (err) {
+        handleError(err, res);
     }
 };
 
-// Create product with custom validation
+// get one product by id
+exports.getProductById = async (req, res) => {
+    try {
+        const product = await Product.findByPk(req.params.id);
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+        res.json(product);
+    } catch (err) {
+        handleError(err, res);
+    }
+};
+
+// create new product - with all the validations and stuff
 exports.createProduct = async (req, res) => {
     try {
-        const { name, category, price, quantity, reorderPoint, unit, notes } = req.body;
+        const { name, category, price, quantity, reorderPoint, unit } = req.body;
 
-        // Custom validation
-        if (!name || !category || price === undefined || quantity === undefined) {
-            return res.status(400).json({
-                success: false,
-                message: 'Missing required fields'
-            });
+        // check if we got all the stuff we need
+        if (!name || !category || !price || !quantity || !reorderPoint || !unit) {
+            return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        // Generate SKU
+        // make sku and create product
         const sku = generateSKU(category);
-
         const product = await Product.create({
-            name,
-            sku,
-            category,
-            price,
-            quantity,
-            reorderPoint: reorderPoint || 10,
-            unit: unit || 'piece',
-            notes
+            ...req.body,
+            sku
         });
 
-        res.status(201).json({
-            success: true,
-            message: 'Product created successfully',
-            data: product
-        });
-    } catch (error) {
-        handleError(error, res);
+        res.status(201).json(product);
+    } catch (err) {
+        handleError(err, res);
     }
 };
 
-// Update product with custom business logic
+// update product - with tracking changes and stuff
 exports.updateProduct = async (req, res) => {
     try {
-        const { id } = req.params;
-        const updates = req.body;
-
-        // Find product
-        const product = await Product.findByPk(id);
+        const product = await Product.findByPk(req.params.id);
         if (!product) {
-            return res.status(404).json({
-                success: false,
-                message: 'Product not found'
-            });
+            return res.status(404).json({ error: 'Product not found' });
         }
 
-        // Custom validation for quantity updates
-        if (updates.quantity !== undefined) {
+        // track big changes in quantity
+        if (req.body.quantity !== undefined) {
             const oldQuantity = product.quantity;
-            const newQuantity = updates.quantity;
+            const newQuantity = req.body.quantity;
+            const diff = newQuantity - oldQuantity;
 
-            // Add to notes if quantity changes significantly
-            if (Math.abs(newQuantity - oldQuantity) > 10) {
-                updates.notes = `${updates.notes || ''}\nQuantity changed from ${oldQuantity} to ${newQuantity} on ${new Date().toISOString()}`;
+            if (Math.abs(diff) > 10) { // if change is more than 10
+                const note = `Quantity changed from ${oldQuantity} to ${newQuantity} (${diff > 0 ? '+' : ''}${diff})`;
+                req.body.notes = product.notes ? `${product.notes}\n${note}` : note;
             }
         }
 
-        // Update product
-        await product.update(updates);
-
-        res.json({
-            success: true,
-            message: 'Product updated successfully',
-            data: product
-        });
-    } catch (error) {
-        handleError(error, res);
+        await product.update(req.body);
+        res.json(product);
+    } catch (err) {
+        handleError(err, res);
     }
 };
 
-// Delete product with custom checks
+// delete product - but only if no stock left
 exports.deleteProduct = async (req, res) => {
     try {
-        const { id } = req.params;
-
-        // Find product
-        const product = await Product.findByPk(id);
+        const product = await Product.findByPk(req.params.id);
         if (!product) {
-            return res.status(404).json({
-                success: false,
-                message: 'Product not found'
-            });
+            return res.status(404).json({ error: 'Product not found' });
         }
 
-        // Custom check for products with stock
+        // cant delete if we still have stock
         if (product.quantity > 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Cannot delete product with remaining stock'
-            });
+            return res.status(400).json({ error: 'Cannot delete product with remaining stock' });
         }
 
         await product.destroy();
-
-        res.json({
-            success: true,
-            message: 'Product deleted successfully'
-        });
-    } catch (error) {
-        handleError(error, res);
+        res.status(204).send();
+    } catch (err) {
+        handleError(err, res);
     }
 }; 
