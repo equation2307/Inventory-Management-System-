@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory Management System</title>
+    <title>Suppliers - Inventory Management System</title>
     <link href="styles.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -23,11 +23,11 @@
                 </div>
             </div>
             <ul class="nav-links">
-                <li><a href="index.html" class="active"><i class="fas fa-home"></i>Dashboard</a></li>
+                <li><a href="index.html"><i class="fas fa-home"></i>Dashboard</a></li>
                 <li><a href="products.html"><i class="fas fa-box"></i>Products</a></li>
                 <li><a href="inventory.html"><i class="fas fa-warehouse"></i>Inventory</a></li>
                 <li><a href="orders.html"><i class="fas fa-shopping-cart"></i>Orders</a></li>
-                <li><a href="suppliers.html"><i class="fas fa-truck"></i>Suppliers</a></li>
+                <li><a href="suppliers.html" class="active"><i class="fas fa-truck"></i>Suppliers</a></li>
                 <li><a href="reports.html"><i class="fas fa-chart-bar"></i>Reports</a></li>
                 <li><a href="login.html"><i class="fas fa-sign-out-alt"></i>Logout</a></li>
             </ul>
@@ -36,7 +36,7 @@
         <main class="main-content">
             <header>
                 <div class="search-bar">
-                    <input type="text" placeholder="Search products, orders...">
+                    <input type="text" placeholder="Search suppliers...">
                     <button><i class="fas fa-search"></i></button>
                 </div>
                 <div class="user-info">
@@ -88,17 +88,26 @@
 
             <div id="content">
                 <div class="content-header">
-                    <h1>Dashboard</h1>
+                    <h1>Suppliers Management</h1>
+                    <button class="add-button"><i class="fas fa-plus"></i> Add Supplier</button>
                 </div>
-                <div class="dashboard-stats">
-                    <div class="stat-card">
-                        <h3>Welcome to IMS</h3>
-                        <p>Your inventory management solution</p>
+                <div class="suppliers-container">
+                    <div class="filters">
+                        <select id="category-filter">
+                            <option value="">All Categories</option>
+                        </select>
+                        <select id="status-filter">
+                            <option value="">All Status</option>
+                        </select>
+                    </div>
+                    <div class="suppliers-grid" id="suppliers-grid">
+                        <!-- Suppliers will be loaded here -->
                     </div>
                 </div>
             </div>
         </main>
     </div>
     <script src="app.js"></script>
+    <script src="suppliers.js"></script>
 </body>
 </html> 

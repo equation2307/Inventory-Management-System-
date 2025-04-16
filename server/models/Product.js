@@ -58,8 +58,8 @@ Product.init({
         defaultValue: 'piece'
     },
     status: {
-        type: DataTypes.ENUM('active', 'inactive', 'discontinued'),
-        defaultValue: 'active'
+        type: DataTypes.ENUM('in_stock', 'low_stock', 'out_of_stock'),
+        defaultValue: 'in_stock'
     }
 }, {
     sequelize,
