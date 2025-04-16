@@ -1,9 +1,9 @@
 const { Product } = require('../models');
 const { Op } = require('sequelize');
 
-// handle errors better - got tired of writing same error msgs over and over
+// handle errors better - 
 const handleError = (err, res) => {
-    console.error('Error:', err); // log it so we can debug later
+    console.error('Error:', err); // log it so that we can debug later
     if (err.name === 'ValidationError') {
         return res.status(400).json({ error: err.message });
     }
@@ -13,7 +13,7 @@ const handleError = (err, res) => {
     return res.status(500).json({ error: 'Something went wrong' });
 };
 
-// make sku for new products - had to make this cuz manual sku was pain
+// make sku for new products - had to make this cuz manual sku was not easy
 const generateSKU = (category) => {
     const prefix = category.substring(0, 3).toUpperCase();
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -21,7 +21,7 @@ const generateSKU = (category) => {
     return `${prefix}-${date}-${random}`;
 };
 
-// get all products with sorting and stuff
+// get all products with sorting and 
 exports.getAllProducts = async (req, res) => {
     try {
         const { sortBy = 'name', order = 'ASC', category, status } = req.query;
@@ -37,7 +37,7 @@ exports.getAllProducts = async (req, res) => {
             order: [[sortBy, order]]
         });
 
-        // count stuff for the frontend
+        // count products for the frontend page
         const total = products.length;
         const inStock = products.filter(p => p.status === 'in_stock').length;
         const lowStock = products.filter(p => p.status === 'low_stock').length;
@@ -70,12 +70,12 @@ exports.getProductById = async (req, res) => {
     }
 };
 
-// create new product - with all the validations and stuff
+// create new product - with all the validations
 exports.createProduct = async (req, res) => {
     try {
         const { name, category, price, quantity, reorderPoint, unit } = req.body;
 
-        // check if we got all the stuff we need
+        // check if we got all the things we need
         if (!name || !category || !price || !quantity || !reorderPoint || !unit) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
@@ -93,7 +93,7 @@ exports.createProduct = async (req, res) => {
     }
 };
 
-// update product - with tracking changes and stuff
+// update product - with tracking changes
 exports.updateProduct = async (req, res) => {
     try {
         const product = await Product.findByPk(req.params.id);
