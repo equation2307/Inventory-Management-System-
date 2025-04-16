@@ -1,18 +1,18 @@
 # Inventory Management System
 
-Hey there! This is a simple inventory management system I made to keep track of stuff. It's not perfect but it gets the job done 😅
+Hey there! This is a simple inventory management system I made to keep track of the products. 
 
 ## What it does
 
 - Keeps track of all your products and their quantities
 - Shows you when stuff is running low
 - Lets you add/edit/delete products
-- Has a nice looking UI (at least I think so)
+- Has a nice looking UI
 - Works on mobile too!
 
 ## How to use it
 
-First, you gotta install all the stuff:
+First, you gotta install all these commands:
 
 ```bash
 npm install
@@ -40,27 +40,23 @@ Thats it! Now you can go to `http://localhost:3000` and start managing your inve
 - **Search & Filter**: Find products quickly
 - **Responsive Design**: Works on any device
 
-## Tech Stuff
+## Technology
 
 - Frontend: HTML, CSS, JavaScript (the basics)
 - Backend: Node.js with Express
 - Database: MySQL
-- Authentication: JWT (kinda secure I guess)
+- Authentication: JWT
 
 ## Known Issues
 
-- Sometimes the modal doesn't show up (working on it)
+- Sometimes the modal doesn't show up
 - Mobile view could be better
-- No dark mode yet (coming soon maybe)
+- No dark mode yet (coming soon)
 
 ## Contributing
 
-Feel free to help out if you want! Just make a pull request and I'll check it out.
-
-## License
-
-MIT License - do whatever you want with it
+Feel free to help out if you want!
 
 ## Contact
 
-If you find any bugs or have suggestions, let me know! I'm always looking to improve this thing. 
+If you find any bugs or have suggestions, let me know! I'm always looking to improve this project. 
