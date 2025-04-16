@@ -8,11 +8,11 @@ if (typeof window.productsInitialized === 'undefined') {
     let productsPort;
     let productsAPI_URL;
 
-    // Initialize API URL
-    function initializeAPI() {
+    // Initialize API URL - Setting up our connection to the backend
+    function setupBackendConnection() {
         productsPort = window.location.port;
         productsAPI_URL = `http://localhost:${productsPort}/api`;
-        console.log('API URL initialized:', productsAPI_URL);
+        console.log('Backend connection established:', productsAPI_URL);
     }
 
     // DOM Elements
@@ -55,13 +55,13 @@ if (typeof window.productsInitialized === 'undefined') {
         return token;
     }
 
-    // Load products
-    async function loadProducts() {
+    // Load and display our inventory items
+    async function loadInventoryItems() {
         const token = checkAuth();
         if (!token) return;
 
         try {
-            console.log('Starting to load products...');
+            console.log('Fetching inventory items from backend...');
             const response = await fetch(`${productsAPI_URL}/products`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -74,47 +74,56 @@ if (typeof window.productsInitialized === 'undefined') {
             }
 
             if (!response.ok) {
-                throw new Error('Failed to load products');
+                throw new Error('Failed to load inventory items');
             }
 
-            const products = await response.json();
-            console.log('Products loaded successfully:', products);
-            displayProducts(products);
+            const inventoryItems = await response.json();
+            console.log('Inventory items loaded successfully:', inventoryItems);
+            displayInventoryItems(inventoryItems);
         } catch (error) {
-            console.error('Error loading products:', error);
-            showNotification('Failed to load products', 'error');
+            console.error('Error loading inventory:', error);
+            showNotification('Failed to load inventory items', 'error');
         }
     }
 
-    // Display products
-    function displayProducts(products) {
-        console.log('Displaying products in table...');
+    // Display our inventory items in a neat table
+    function displayInventoryItems(inventoryItems) {
+        console.log('Updating inventory table...');
         productsTableBody.innerHTML = '';
         
-        products.forEach(product => {
+        inventoryItems.forEach(item => {
             const row = document.createElement('tr');
-            // Safely format the price
-            const price = typeof product.price === 'string' ? 
-                parseFloat(product.price) : product.price;
+            row.setAttribute('data-id', item.id);
+            
+            // Add low stock warning class if quantity is low
+            if (item.quantity <= 10) {
+                row.classList.add('low-stock-warning');
+            }
+            
+            const price = typeof item.price === 'string' ? 
+                parseFloat(item.price) : item.price;
             
             row.innerHTML = `
-                <td>${product.name}</td>
-                <td>${product.category}</td>
+                <td>${item.name}</td>
+                <td>${item.category}</td>
                 <td>$${price.toFixed(2)}</td>
-                <td>${product.quantity || 0}</td>
-                <td><span class="status-badge ${getStatusClass(product.quantity)}">${getStatusText(product.quantity)}</span></td>
+                <td>${item.quantity || 0}</td>
+                <td><span class="status-badge ${getStatusClass(item.quantity)}">${getStatusText(item.quantity)}</span></td>
                 <td>
-                    <button class="icon-button edit" onclick="editProduct(${product.id})">
+                    <button class="icon-button edit" onclick="editInventoryItem(${item.id})">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="icon-button delete" onclick="deleteProduct(${product.id})">
+                    <button class="icon-button delete" onclick="deleteInventoryItem(${item.id})">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
             `;
             productsTableBody.appendChild(row);
         });
-        console.log('Products table updated');
+        
+        // Check for low stock warnings
+        checkLowStockWarnings(inventoryItems);
+        console.log('Inventory table updated successfully');
     }
 
     // Show Modal
@@ -203,10 +212,11 @@ if (typeof window.productsInitialized === 'undefined') {
     // Initialize the page
     document.addEventListener('DOMContentLoaded', () => {
         console.log('DOM Content Loaded - Starting initialization');
-        initializeAPI();
+        setupBackendConnection();
         initializeDOMElements();
         setupEventListeners();
-        loadProducts();
+        addSortingButtons();
+        loadInventoryItems();
     });
 
     // Add Product
@@ -294,7 +304,7 @@ if (typeof window.productsInitialized === 'undefined') {
             
             // Reload products
             console.log('Reloading products after update...');
-            await loadProducts();
+            await loadInventoryItems();
             console.log('Products reloaded successfully');
         } catch (error) {
             console.error(`Error ${isEdit ? 'updating' : 'adding'} product:`, error);
@@ -348,7 +358,7 @@ if (typeof window.productsInitialized === 'undefined') {
     }
 
     // Edit Product
-    async function editProduct(productId) {
+    async function editInventoryItem(productId) {
         try {
             const token = checkAuth();
             if (!token) return;
@@ -393,7 +403,7 @@ if (typeof window.productsInitialized === 'undefined') {
     }
 
     // Delete Product
-    async function deleteProduct(productId) {
+    async function deleteInventoryItem(productId) {
         if (!confirm('Are you sure you want to delete this product?')) {
             return;
         }
@@ -414,10 +424,69 @@ if (typeof window.productsInitialized === 'undefined') {
             }
 
             showNotification('Product deleted successfully', 'info');
-            loadProducts();
+            loadInventoryItems();
         } catch (error) {
             console.error('Error deleting product:', error);
             showNotification('Failed to delete product', 'error');
+        }
+    }
+
+    // Sort inventory items by different criteria
+    function sortInventoryBy(criteria) {
+        const inventoryItems = Array.from(productsTableBody.children);
+        inventoryItems.sort((a, b) => {
+            const aValue = a.children[criteria === 'name' ? 0 : 3].textContent;
+            const bValue = b.children[criteria === 'name' ? 0 : 3].textContent;
+            
+            if (criteria === 'name') {
+                return aValue.localeCompare(bValue);
+            } else {
+                return parseInt(aValue) - parseInt(bValue);
+            }
+        });
+        
+        // Clear and re-add sorted items
+        productsTableBody.innerHTML = '';
+        inventoryItems.forEach(item => productsTableBody.appendChild(item));
+    }
+
+    // Check for low stock items and show warnings
+    function checkLowStockWarnings(inventoryItems) {
+        const lowStockItems = inventoryItems.filter(item => item.quantity <= 10);
+        if (lowStockItems.length > 0) {
+            const warningMessage = `⚠️ Warning: ${lowStockItems.length} item(s) are running low on stock!`;
+            showNotification(warningMessage, 'warning');
+            
+            // Highlight low stock items in the table
+            lowStockItems.forEach(item => {
+                const row = document.querySelector(`tr[data-id="${item.id}"]`);
+                if (row) {
+                    row.classList.add('low-stock-warning');
+                }
+            });
+        }
+    }
+
+    // Add sorting buttons to the table header
+    function addSortingButtons() {
+        const tableHeader = document.querySelector('#products-table thead tr');
+        if (tableHeader) {
+            const nameHeader = tableHeader.children[0];
+            const quantityHeader = tableHeader.children[3];
+            
+            nameHeader.innerHTML = `
+                <span>Name</span>
+                <button class="sort-btn" onclick="sortInventoryBy('name')">
+                    <i class="fas fa-sort"></i>
+                </button>
+            `;
+            
+            quantityHeader.innerHTML = `
+                <span>Quantity</span>
+                <button class="sort-btn" onclick="sortInventoryBy('quantity')">
+                    <i class="fas fa-sort"></i>
+                </button>
+            `;
         }
     }
 } else {
