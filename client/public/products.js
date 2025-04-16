@@ -55,14 +55,27 @@ if (typeof window.productsInitialized === 'undefined') {
         return token;
     }
 
-    // Load and display our inventory items
+    // Load inventory items with sorting and filtering
     async function loadInventoryItems() {
         const token = checkAuth();
         if (!token) return;
 
         try {
-            console.log('Fetching inventory items from backend...');
-            const response = await fetch(`${productsAPI_URL}/products`, {
+            // Get current filters
+            const category = document.getElementById('category-filter').value;
+            const status = document.getElementById('status-filter').value;
+            const sortBy = document.getElementById('sort-by').value;
+            const sortOrder = document.getElementById('sort-order').value;
+
+            const queryParams = new URLSearchParams({
+                category: category || undefined,
+                status: status || undefined,
+                sortBy: sortBy || 'name',
+                order: sortOrder || 'ASC'
+            });
+
+            console.log('Fetching inventory with filters:', queryParams.toString());
+            const response = await fetch(`${productsAPI_URL}/products?${queryParams}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -77,16 +90,54 @@ if (typeof window.productsInitialized === 'undefined') {
                 throw new Error('Failed to load inventory items');
             }
 
-            const inventoryItems = await response.json();
-            console.log('Inventory items loaded successfully:', inventoryItems);
-            displayInventoryItems(inventoryItems);
+            const data = await response.json();
+            console.log('Inventory data loaded:', data);
+
+            // Display items
+            displayInventoryItems(data.data);
+
+            // Update metadata display
+            updateMetadataDisplay(data.metadata);
+
+            // Check for low stock warnings
+            checkLowStockWarnings(data.data);
         } catch (error) {
             console.error('Error loading inventory:', error);
             showNotification('Failed to load inventory items', 'error');
         }
     }
 
-    // Display our inventory items in a neat table
+    // Update metadata display
+    function updateMetadataDisplay(metadata) {
+        const metadataContainer = document.getElementById('inventory-metadata');
+        if (metadataContainer) {
+            metadataContainer.innerHTML = `
+                <div class="metadata-card">
+                    <h3>Inventory Summary</h3>
+                    <p>Total Items: ${metadata.total}</p>
+                    <p>Categories: ${metadata.categories.join(', ')}</p>
+                    <div class="status-summary">
+                        <span class="status-badge in-stock">In Stock: ${metadata.statusCounts.in_stock}</span>
+                        <span class="status-badge low-stock">Low Stock: ${metadata.statusCounts.low_stock}</span>
+                        <span class="status-badge out-of-stock">Out of Stock: ${metadata.statusCounts.out_of_stock}</span>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    // Handle sorting
+    function setupSorting() {
+        const sortBySelect = document.getElementById('sort-by');
+        const sortOrderSelect = document.getElementById('sort-order');
+
+        if (sortBySelect && sortOrderSelect) {
+            sortBySelect.addEventListener('change', loadInventoryItems);
+            sortOrderSelect.addEventListener('change', loadInventoryItems);
+        }
+    }
+
+    // Enhanced display of inventory items
     function displayInventoryItems(inventoryItems) {
         console.log('Updating inventory table...');
         productsTableBody.innerHTML = '';
@@ -95,35 +146,59 @@ if (typeof window.productsInitialized === 'undefined') {
             const row = document.createElement('tr');
             row.setAttribute('data-id', item.id);
             
-            // Add low stock warning class if quantity is low
-            if (item.quantity <= 10) {
+            // Add status classes
+            if (item.quantity <= 0) {
+                row.classList.add('out-of-stock');
+            } else if (item.quantity <= item.reorderPoint) {
                 row.classList.add('low-stock-warning');
             }
             
             const price = typeof item.price === 'string' ? 
                 parseFloat(item.price) : item.price;
             
+            // Format last restocked date
+            const lastRestocked = item.lastRestocked ? 
+                new Date(item.lastRestocked).toLocaleDateString() : 'Never';
+            
             row.innerHTML = `
                 <td>${item.name}</td>
                 <td>${item.category}</td>
+                <td>${item.sku}</td>
                 <td>$${price.toFixed(2)}</td>
-                <td>${item.quantity || 0}</td>
+                <td>${item.quantity || 0} ${item.unit}</td>
                 <td><span class="status-badge ${getStatusClass(item.quantity)}">${getStatusText(item.quantity)}</span></td>
+                <td>${lastRestocked}</td>
                 <td>
-                    <button class="icon-button edit" onclick="editInventoryItem(${item.id})">
+                    <button class="icon-button edit" onclick="editInventoryItem(${item.id})" title="Edit Item">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="icon-button delete" onclick="deleteInventoryItem(${item.id})">
+                    <button class="icon-button delete" onclick="deleteInventoryItem(${item.id})" title="Delete Item">
                         <i class="fas fa-trash"></i>
+                    </button>
+                    <button class="icon-button notes" onclick="showNotes(${item.id})" title="View Notes">
+                        <i class="fas fa-sticky-note"></i>
                     </button>
                 </td>
             `;
             productsTableBody.appendChild(row);
         });
         
-        // Check for low stock warnings
-        checkLowStockWarnings(inventoryItems);
         console.log('Inventory table updated successfully');
+    }
+
+    // Show notes modal
+    function showNotes(itemId) {
+        const modal = document.getElementById('notesModal');
+        const notesContent = document.getElementById('notesContent');
+        
+        // Find the item
+        const item = inventoryItems.find(i => i.id === itemId);
+        if (item && item.notes) {
+            notesContent.textContent = item.notes;
+            modal.style.display = 'block';
+        } else {
+            showNotification('No notes available for this item', 'info');
+        }
     }
 
     // Show Modal
@@ -209,12 +284,13 @@ if (typeof window.productsInitialized === 'undefined') {
         }
     }
 
-    // Initialize the page
+    // Initialize the page with new features
     document.addEventListener('DOMContentLoaded', () => {
         console.log('DOM Content Loaded - Starting initialization');
         setupBackendConnection();
         initializeDOMElements();
         setupEventListeners();
+        setupSorting();
         addSortingButtons();
         loadInventoryItems();
     });
