@@ -2,7 +2,7 @@
 CREATE DATABASE IF NOT EXISTS inventory_system;
 USE inventory_system;
 
--- Users table
+-- This is the Users table
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Products table
+-- This is the Products table
 CREATE TABLE IF NOT EXISTS products (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS products (
     INDEX idx_sku (sku)
 );
 
--- Suppliers table
+-- This is the Suppliers table
 CREATE TABLE IF NOT EXISTS suppliers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS suppliers (
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Orders table
+-- This is the Orders table
 CREATE TABLE IF NOT EXISTS orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     orderNumber VARCHAR(50) NOT NULL UNIQUE,
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS orders (
     INDEX idx_order_number (orderNumber)
 );
 
--- Order Items table
+-- This is the Order Items table
 CREATE TABLE IF NOT EXISTS order_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     orderId INT NOT NULL,
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     FOREIGN KEY (productId) REFERENCES products(id)
 );
 
--- Inventory Transactions table
+-- This is the Inventory Transactions table
 CREATE TABLE IF NOT EXISTS inventory_transactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     productId INT NOT NULL,
